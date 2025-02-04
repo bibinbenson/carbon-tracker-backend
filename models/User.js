@@ -17,11 +17,9 @@ const userSchema = new mongoose.Schema({
   totalEmissions: {
     type: Number,
     default: 0
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('User', userSchema);

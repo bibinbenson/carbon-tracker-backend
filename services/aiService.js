@@ -1,31 +1,14 @@
-const tf = require('@tensorflow/tfjs-node');
-
-let model;
-(async () => {
-  try {
-    model = await tf.loadLayersModel('file://./models/emissions_model/model.json');
-  } catch (error) {
-    console.error('Error loading model:', error);
-  }
-})();
-
+// services/aiService.js
 const predictEmissions = async (userData) => {
   try {
     const { distance, energyUsage, meatMeals } = userData;
     
-    // Normalize input data
-    const input = tf.tensor2d([[
-      distance / 1000, // normalize to thousands
-      energyUsage / 100,
-      meatMeals / 21
-    ]]);
-    
-    const prediction = await model.predict(input);
-    const projected = prediction.dataSync()[0] * 100; // denormalize
+    // Simple calculation instead of ML model
+    const projected = (distance * 0.2) + (energyUsage * 0.5) + (meatMeals * 2.5);
     
     return {
       projected: Math.round(projected * 100) / 100,
-      potentialReduction: Math.round((1 - projected / 100) * 100),
+      potentialReduction: Math.round((1 - projected / 1000) * 100),
       recommendations: generateRecommendations(userData)
     };
   } catch (error) {
@@ -65,8 +48,11 @@ const generateTips = async (userProfile) => {
 };
 
 const generateRecommendations = (userData) => {
-  const recommendations = [];
-  // Add your recommendation logic here
+  const recommendations = [
+    'Use public transportation when possible',
+    'Switch to energy-efficient appliances',
+    'Reduce meat consumption'
+  ];
   return recommendations;
 };
 

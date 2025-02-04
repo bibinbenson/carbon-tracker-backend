@@ -15,11 +15,9 @@ const challengeSchema = new mongoose.Schema({
   category: {
     type: String,
     enum: ['TRANSPORT', 'ENERGY', 'FOOD']
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('Challenge', challengeSchema);
