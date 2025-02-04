@@ -1,26 +1,61 @@
-const express = require("express");
-const cors = require("cors");
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const http = require('http');
+const socketIo = require('socket.io');
+require('dotenv').config();
+
+const aiRoutes = require('./routes/aiRoutes');
+const userRoutes = require('./routes/userRoutes');
+const challengeRoutes = require('./routes/challengeRoutes');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST"]
+  }
+});
+
+const port = process.env.PORT || 5001;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-app.post("/api/emissions", (req, res) => {
-  const { distance, transportMode, energyUsage, meatMeals } = req.body;
-  
-  // Example AI recommendation logic
-  let emissionReductionSuggestions = [];
-  if (transportMode === "car") {
-    emissionReductionSuggestions.push("Consider using public transport or a bicycle to reduce emissions.");
-  }
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('User connected');
 
-  // Dummy emission calculation
-  const totalEmissions = (distance * 0.2) + (energyUsage * 0.5) + (meatMeals * 0.1);
+  socket.on('joinRoom', (userId) => {
+    socket.join(`user-${userId}`);
+  });
 
-  res.json({ totalEmissions, suggestions: emissionReductionSuggestions });
+  socket.on('challengeProgress', (data) => {
+    io.to(`user-${data.userId}`).emit('progressUpdate', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });
 
-const port = 5001;
-app.listen(port, () => {
+// Database connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('MongoDB connected successfully');
+}).catch((err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+// Routes
+app.use('/api/ai', aiRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/challenges', challengeRoutes);
+
+server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
